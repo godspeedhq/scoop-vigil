@@ -24,7 +24,7 @@ jobs:
         run: |
           tag=$(gh api repos/godspeedhq/vigil/releases/latest -q .tag_name)
           case $tag in v[0-9]*) ;; *) echo "not a release tag: $tag"; exit 1 ;; esac
-          have=$(sed -n 's/^ *"version": "\(.*\)",$/\1/p' bucket/vigil.json 2> /dev/null)
+          have=$(sed -n 's/^ *"version": "\(.*\)",$/\1/p' bucket/vigil.json 2> /dev/null || true)
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           if [ "v$have" = "$tag" ]; then echo "already $tag"; else echo "update=1" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@v5
