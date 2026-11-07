@@ -1,0 +1,53 @@
+# Keeps bucket/vigil.json on Vigil's latest release: checked hourly, or by hand.
+# The manifest is written by tools/release/tap-bucket.sh from that release's
+# tag, with the hash from its SHA256SUMS, which must verify against
+# release-key.pem here first. Nothing else in this repository changes.
+name: update
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: the latest release
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api repos/godspeedhq/vigil/releases/latest -q .tag_name)
+          case $tag in v[0-9]*) ;; *) echo "not a release tag: $tag"; exit 1 ;; esac
+          have=$(sed -n 's/^ *"version": "\(.*\)",$/\1/p' bucket/vigil.json 2> /dev/null)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [ "v$have" = "$tag" ]; then echo "already $tag"; else echo "update=1" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v5
+        if: steps.latest.outputs.update
+        with:
+          repository: godspeedhq/vigil
+          ref: ${{ steps.latest.outputs.tag }}
+          path: vigil
+      - name: verify and write
+        if: steps.latest.outputs.update
+        run: |
+          tag=${{ steps.latest.outputs.tag }}
+          # Releases before 0.5.1 have no formula or manifest to write.
+          [ -f vigil/tools/release/tap-bucket.sh ] || { echo "$tag predates the formula and manifest"; exit 0; }
+          base=https://github.com/godspeedhq/vigil/releases/download/$tag
+          curl -fsSLo "$RUNNER_TEMP/SHA256SUMS" "$base/SHA256SUMS"
+          curl -fsSLo "$RUNNER_TEMP/SHA256SUMS.sig" "$base/SHA256SUMS.sig"
+          openssl dgst -sha256 -verify release-key.pem -signature "$RUNNER_TEMP/SHA256SUMS.sig" "$RUNNER_TEMP/SHA256SUMS"
+          bash vigil/tools/release/tap-bucket.sh "${tag#v}" "$RUNNER_TEMP/SHA256SUMS" "$RUNNER_TEMP/out"
+          cp "$RUNNER_TEMP/out/bucket/vigil.json" bucket/vigil.json
+          rm -rf vigil
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add bucket/vigil.json
+          git commit -m "vigil ${tag#v}"
+          git push
