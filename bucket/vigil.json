@@ -1,12 +1,12 @@
 {
     "##": "Vigil's Scoop manifest, for the godspeedhq/scoop-vigil bucket. Written from packaging/scoop/vigil.json.in in the Vigil repository by tools/release/tap-bucket.sh, from a release's signed SHA256SUMS: change it there, not in the bucket.",
-    "version": "1.5.0",
+    "version": "1.5.2",
     "description": "Job scheduler, supervisor and metrics forwarder, written only in the shells that ship with each OS.",
     "homepage": "https://github.com/godspeedhq/vigil",
     "license": "Apache-2.0",
-    "url": "https://github.com/godspeedhq/vigil/releases/download/v1.5.0/vigil-1.5.0.zip",
-    "hash": "136bb700a5fbe994eb89807580e02ee2c1c9d44fb8c0dc58949c4dd327acead8",
-    "extract_dir": "vigil-1.5.0",
+    "url": "https://github.com/godspeedhq/vigil/releases/download/v1.5.2/vigil-1.5.2.zip",
+    "hash": "d5425e32e335f9895d7f9674795e1d01b8a1e8b15c4402dde6fb34aa865dd5fc",
+    "extract_dir": "vigil-1.5.2",
     "installer": {
         "script": [
             "# The package manager owns the program (18.6): self update leaves it to Scoop, and the root is",
